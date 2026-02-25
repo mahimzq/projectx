@@ -1,0 +1,3 @@
+DELETE FROM Task;
+DELETE FROM Phase;
+DELETE FROM User;

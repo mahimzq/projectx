@@ -1,0 +1,51 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("DIRECTOR") // DIRECTOR, ADMIN, PROJECT_MANAGER
+  tasks     Task[]   @relation("TaskOwner")
+}
+
+model Phase {
+  id        String   @id @default(uuid())
+  name      String
+  order     Int
+  tasks     Task[]
+}
+
+model Task {
+  id             String   @id @default(uuid())
+  actionItem     String
+  priority       String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  status         String   @default("NOT_STARTED") // COMPLETE, NOT_STARTED, IN_PROGRESS, ON_HOLD
+  startDate      DateTime?
+  dueDate        DateTime?
+  durationDays   Int      @default(0)
+  actualDays     Int?     @default(0)
+  actualEndDate  DateTime?
+  variance       String?
+  evidence       String?
+  actionType     String?
+  ragRating      String?  @default("GREEN") // RED, AMBER, GREEN
+  completedBy    String?
+  ownerId        String?
+  owner          User?    @relation("TaskOwner", fields: [ownerId], references: [id])
+  phaseId        String
+  phase          Phase    @relation(fields: [phaseId], references: [id])
+  resources      String?
+  estimatedCost  Float    @default(0)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
