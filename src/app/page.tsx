@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   TrendingUp,
   Users,
@@ -8,7 +8,8 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
-  DollarSign
+  DollarSign,
+  Sparkles
 } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
 import PhaseCard from "@/components/PhaseCard";
@@ -22,9 +23,24 @@ interface SummaryData {
   phaseStats: any[];
 }
 
+const MOTIVATIONAL_QUOTES = [
+  "To launch and mobilize Mindset Childrens Home as a compassionate, self-sustaining model that delivers exceptional care, education, and opportunity to vulnerable children through dedicated resources, partnerships, and community support.",
+  "Every child deserves a safe haven where they are nurtured, valued, and empowered to reach their full potential. Through unified action, we transform that vision into reality — one milestone at a time.",
+  "Building a children's home is not just about bricks and mortar — it's about creating a sanctuary of hope, trust, and belonging where every young life can flourish beyond their circumstances.",
+  "Our mission extends beyond shelter: we are cultivating resilience, igniting curiosity, and planting seeds of self-belief in children who will one day lead their communities with compassion and strength.",
+  "True mobilisation means aligning hearts, minds, and resources towards a singular purpose — ensuring no child is left behind, and every door of opportunity swings wide open for them.",
+  "Together we are laying the foundation for something extraordinary: a home that heals, educates, and inspires — a launchpad for the next generation of changemakers and dreamers.",
+  "Progress is not just measured in percentages and timelines, but in the smiles we'll see, the futures we'll unlock, and the lives forever changed by our collective commitment.",
+  "From strategic planning to boots-on-the-ground action, every task completed brings us closer to the day when Mindset Childrens Home opens its doors and transforms vulnerable lives.",
+  "We believe that when passionate people come together with a clear purpose, the impossible becomes inevitable. This mobilisation is proof of that unwavering belief in action.",
+  "A child's potential knows no bounds when met with love, stability, and opportunity. Every phase of this plan is a step towards giving that gift to those who need it most.",
+];
+
 export default function Dashboard() {
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [quoteIndex, setQuoteIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
     fetch("/api/summary")
@@ -40,6 +56,19 @@ export default function Dashboard() {
         console.error("Failed to fetch summary:", err);
         setLoading(false);
       });
+  }, []);
+
+  // Rotate quotes every 5 minutes with fade transition
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setQuoteIndex((prev) => (prev + 1) % MOTIVATIONAL_QUOTES.length);
+        setIsFading(false);
+      }, 500);
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -112,15 +141,29 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Goal Section */}
-      <div className="glass-card p-5 md:p-8 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border-blue-500/20">
-        <div className="flex items-center space-x-3 mb-3 md:mb-4">
-          <TrendingUp className="text-blue-400 w-5 h-5 md:w-6 md:h-6" />
-          <h3 className="text-base md:text-xl font-bold text-white">Mobilisation Goal</h3>
+      {/* Goal Section — Rotating Quotes */}
+      <div className="glass-card p-5 md:p-8 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border-blue-500/20 relative overflow-hidden">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <div className="flex items-center space-x-3">
+            <TrendingUp className="text-blue-400 w-5 h-5 md:w-6 md:h-6" />
+            <h3 className="text-base md:text-xl font-bold text-white">Mobilisation Goal</h3>
+          </div>
+          <Sparkles className="text-blue-500/30 w-4 h-4 md:w-5 md:h-5" />
         </div>
-        <p className="text-sm md:text-lg text-slate-300 leading-relaxed italic">
-          "To launch and mobilize Mindset Childrens Home as a compassionate, self-sustaining model that delivers exceptional care, education, and opportunity to vulnerable children through dedicated resources, partnerships, and community support."
+        <p
+          className={`text-sm md:text-lg text-slate-300 leading-relaxed italic transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+        >
+          &ldquo;{MOTIVATIONAL_QUOTES[quoteIndex]}&rdquo;
         </p>
+        {/* Subtle progress dots */}
+        <div className="flex items-center gap-1 mt-4 justify-center">
+          {MOTIVATIONAL_QUOTES.map((_, i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all duration-300 ${i === quoteIndex ? 'w-4 h-1.5 bg-blue-400' : 'w-1.5 h-1.5 bg-slate-600'}`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Phases Grid */}
