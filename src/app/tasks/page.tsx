@@ -11,6 +11,7 @@ import {
     ChevronDown,
     ChevronUp
 } from "lucide-react";
+import { useAlertDialog } from "@/components/AlertDialog";
 
 interface Task {
     id: string;
@@ -37,6 +38,7 @@ const TasksPage = () => {
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>({});
     const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+    const { confirm: confirmDialog, DialogComponent } = useAlertDialog();
 
     const fetchPhasesAndUsers = async () => {
         try {
@@ -138,7 +140,13 @@ const TasksPage = () => {
     };
 
     const handleDeleteTask = async (taskId: string) => {
-        if (!confirm("Are you sure you want to delete this task?")) return;
+        const confirmed = await confirmDialog({
+            title: "Delete Task",
+            message: "This action cannot be undone. Are you sure you want to permanently delete this task?",
+            variant: "danger",
+            confirmLabel: "Delete Task",
+        });
+        if (!confirmed) return;
         try {
             const res = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
             if (res.ok) {
@@ -779,6 +787,7 @@ const TasksPage = () => {
                     </div>
                 );
             })}
+            {DialogComponent}
         </div>
     );
 };

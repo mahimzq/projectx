@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Settings as SettingsIcon, UserPlus, Users } from "lucide-react";
+import { useAlertDialog } from "@/components/AlertDialog";
 
 export default function SettingsPage() {
     const [phases, setPhases] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export default function SettingsPage() {
     const [newUserName, setNewUserName] = useState("");
     const [newUserPassword, setNewUserPassword] = useState("");
     const [newUserRole, setNewUserRole] = useState("DIRECTOR");
+    const { confirm: confirmDialog, DialogComponent } = useAlertDialog();
 
     const fetchAllData = async () => {
         try {
@@ -74,7 +76,13 @@ export default function SettingsPage() {
     };
 
     const handleDeleteUser = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this user?")) return;
+        const confirmed = await confirmDialog({
+            title: "Delete User",
+            message: "This will permanently remove this user's account and access. Continue?",
+            variant: "danger",
+            confirmLabel: "Delete User",
+        });
+        if (!confirmed) return;
         try {
             const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
             if (res.ok) {
@@ -105,7 +113,13 @@ export default function SettingsPage() {
     };
 
     const handleDeletePhase = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this phase and all its tasks?")) return;
+        const confirmed = await confirmDialog({
+            title: "Delete Phase",
+            message: "This will permanently delete this phase and all its associated tasks. This cannot be undone.",
+            variant: "danger",
+            confirmLabel: "Delete Phase",
+        });
+        if (!confirmed) return;
 
         try {
             const res = await fetch(`/api/phases/${id}`, { method: "DELETE" });
@@ -142,7 +156,13 @@ export default function SettingsPage() {
     };
 
     const handleDeleteTask = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this task?")) return;
+        const confirmed = await confirmDialog({
+            title: "Delete Task",
+            message: "This task will be permanently removed. Are you sure?",
+            variant: "danger",
+            confirmLabel: "Delete Task",
+        });
+        if (!confirmed) return;
 
         try {
             const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
@@ -372,6 +392,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
+            {DialogComponent}
         </div>
     );
 }
