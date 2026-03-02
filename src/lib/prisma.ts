@@ -4,7 +4,7 @@ const prismaClientSingleton = () => {
     return new PrismaClient({
         datasources: {
             db: {
-                url: process.env.DATABASE_URL || "mysql://u704589227_task:Speed%402020%40%40@82.29.188.58:3306/u704589227_task?connection_limit=3&pool_timeout=10",
+                url: process.env.DATABASE_URL || "postgres://93546db8871ffdbea173f22fe044f6bbc7d7d42be4eed4f59b79591890875334:sk_KQNjJMDoWdV384YhnHog8@db.prisma.io:5432/postgres?sslmode=require",
             },
         },
     });
