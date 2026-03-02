@@ -1,5 +1,5 @@
 [build]
-  command = "npx prisma generate && npm run build && mkdir -p .next/standalone/prisma && cp prisma/schema.prisma .next/standalone/prisma/ && cp prisma/dev.db .next/standalone/prisma/"
+  command = "npx prisma generate && npx prisma db push --accept-data-loss && npm run build"
   publish = ".next"
 
 [[plugins]]
