@@ -11,24 +11,44 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.error("[AUTH] Login attempt for:", credentials?.email);
+
                 if (!credentials?.email || !credentials?.password) {
+                    console.error("[AUTH] Missing credentials");
                     return null;
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email }
-                });
+                try {
+                    console.error("[AUTH] Looking up user in database...");
+                    const user = await prisma.user.findUnique({
+                        where: { email: credentials.email }
+                    });
 
-                if (!user || user.password !== credentials.password) {
+                    if (!user) {
+                        console.error("[AUTH] User NOT found for email:", credentials.email);
+                        return null;
+                    }
+
+                    console.error("[AUTH] User found:", user.email, "role:", user.role);
+                    console.error("[AUTH] Stored password length:", user.password?.length, "Input password length:", credentials.password?.length);
+                    console.error("[AUTH] Password match:", user.password === credentials.password);
+
+                    if (user.password !== credentials.password) {
+                        console.error("[AUTH] Password MISMATCH");
+                        return null;
+                    }
+
+                    console.error("[AUTH] Login SUCCESS for:", user.email);
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role,
+                    };
+                } catch (error: any) {
+                    console.error("[AUTH] Database error:", error.message);
                     return null;
                 }
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                };
             }
         })
     ],
