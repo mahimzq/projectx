@@ -13,13 +13,17 @@ import {
     Pie,
     Cell
 } from "recharts";
+import { useSpace } from "@/components/SpaceContext";
 
 const AnalyticsPage = () => {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const { activeSpaceId } = useSpace();
 
     useEffect(() => {
-        fetch("/api/summary")
+        setLoading(true);
+        const spaceQuery = activeSpaceId ? `?spaceId=${activeSpaceId}` : '';
+        fetch(`/api/summary${spaceQuery}`)
             .then((res) => res.json())
             .then((data) => {
                 setData(data);
@@ -29,7 +33,7 @@ const AnalyticsPage = () => {
                 console.error("Failed to fetch analytics:", err);
                 setLoading(false);
             });
-    }, []);
+    }, [activeSpaceId]);
 
     if (loading) {
         return (

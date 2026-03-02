@@ -1,14 +1,25 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { differenceInDays } from 'date-fns';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await getServerSession(authOptions);
         const { id } = await params;
         const body = await request.json();
+
+        // Handle acceptance - only DIRECTOR / PROJECT_MANAGER / ADMIN can accept
+        if (body.accepted !== undefined) {
+            const userRole = (session?.user as any)?.role;
+            if (!['DIRECTOR', 'PROJECT_MANAGER', 'ADMIN'].includes(userRole)) {
+                return NextResponse.json({ error: 'Only Directors and Project Managers can accept tasks' }, { status: 403 });
+            }
+        }
 
         // Logic extraction for Duration
         let durationDays = body.durationDays;

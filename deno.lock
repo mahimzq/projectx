@@ -11,10 +11,12 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@netlify/neon@~0.1.2",
         "npm:@prisma/client@^6.19.2",
         "npm:@tailwindcss/postcss@4",
         "npm:@types/next-auth@^3.13.0",
         "npm:@types/node@20",
+        "npm:@types/nodemailer@^7.0.11",
         "npm:@types/react-dom@19",
         "npm:@types/react@19",
         "npm:date-fns@^4.1.0",
@@ -23,6 +25,7 @@
         "npm:lucide-react@0.575",
         "npm:next-auth@^4.24.13",
         "npm:next@16.1.6",
+        "npm:nodemailer@^7.0.13",
         "npm:prisma@^6.19.2",
         "npm:react-dom@19.2.3",
         "npm:react@19.2.3",

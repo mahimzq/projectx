@@ -31,6 +31,77 @@ h4 {
   letter-spacing: -0.02em;
 }
 
+/* ─── Dashboard Ambient Animations (Fireworks) ─── */
+
+@keyframes fireworkBurst {
+  0% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 15px rgba(251, 146, 60, 0.6);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateY(80vh) scale(1);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 15px rgba(251, 146, 60, 0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(40vh) scale(1.2);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 25px rgba(251, 146, 60, 1);
+  }
+
+  55% {
+    /* The burst moment */
+    opacity: 1;
+    transform: translateY(35vh) scale(1.5);
+    background: transparent;
+    box-shadow:
+      0 -30px 4px 1px rgba(255, 200, 100, 0.9),
+      25px -20px 4px 1px rgba(251, 146, 60, 0.9),
+      -25px -20px 4px 1px rgba(255, 100, 0, 0.9),
+      30px 5px 4px 1px rgba(251, 146, 60, 0.9),
+      -30px 5px 4px 1px rgba(255, 200, 100, 0.9),
+      15px 25px 4px 1px rgba(255, 100, 0, 0.9),
+      -15px 25px 4px 1px rgba(251, 146, 60, 0.9),
+      0 30px 4px 1px rgba(255, 200, 100, 0.9);
+  }
+
+  75% {
+    /* Fading out */
+    opacity: 0;
+    transform: translateY(25vh) scale(3);
+    background: transparent;
+    box-shadow:
+      0 -60px 0px 0px rgba(255, 200, 100, 0),
+      50px -40px 0px 0px rgba(251, 146, 60, 0),
+      -50px -40px 0px 0px rgba(255, 100, 0, 0),
+      60px 10px 0px 0px rgba(251, 146, 60, 0),
+      -60px 10px 0px 0px rgba(255, 200, 100, 0),
+      30px 50px 0px 0px rgba(255, 100, 0, 0),
+      -30px 50px 0px 0px rgba(251, 146, 60, 0),
+      0 60px 0px 0px rgba(255, 200, 100, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(25vh) scale(3);
+    background: transparent;
+  }
+}
+
+.ember {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  animation: fireworkBurst 6s ease-out infinite;
+  z-index: 10;
+}
+
 /* ─── Glass Card ─── */
 .glass-card {
   background: var(--glass);
@@ -150,6 +221,451 @@ h4 {
 
 .stagger-in>*:nth-child(8) {
   animation-delay: 0.40s;
+}
+
+/* ─── Dashboard Enhanced Animations ─── */
+
+/* Slide up + fade */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scale in with bounce */
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  60% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Shimmer / gradient sweep effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg,
+      #94a3b8 0%,
+      #e2e8f0 25%,
+      #f1f5f9 50%,
+      #e2e8f0 75%,
+      #94a3b8 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.float-slow {
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-delay-1 {
+  animation-delay: 0.5s;
+}
+
+.float-delay-2 {
+  animation-delay: 1s;
+}
+
+.float-delay-3 {
+  animation-delay: 1.5s;
+}
+
+/* Pulse glow */
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.2), 0 0 15px rgba(59, 130, 246, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4), 0 0 40px rgba(59, 130, 246, 0.15);
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Progress bar animation */
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+}
+
+.progress-animate {
+  animation: progressFill 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Rotating gradient border */
+@keyframes rotateBorder {
+  0% {
+    --angle: 0deg;
+  }
+
+  100% {
+    --angle: 360deg;
+  }
+}
+
+/* Gradient text glow */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6, #60a5fa);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s ease infinite;
+}
+
+/* Breathing ring */
+@keyframes breathe {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+.breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* Icon spin on hover */
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-5deg);
+  }
+
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.icon-wiggle:hover {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Stats card number pop */
+@keyframes numberPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(10px);
+  }
+
+  60% {
+    transform: scale(1.1) translateY(-2px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.number-pop {
+  animation: numberPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Particle dots floating in background */
+@keyframes particleFloat {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+
+  25% {
+    transform: translate(10px, -15px) scale(1.2);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: translate(-5px, -25px) scale(0.8);
+    opacity: 0.4;
+  }
+
+  75% {
+    transform: translate(15px, -10px) scale(1.1);
+    opacity: 0.5;
+  }
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleFloat 8s ease-in-out infinite;
+}
+
+/* Card entrance with 3D tilt */
+@keyframes card3DIn {
+  from {
+    opacity: 0;
+    transform: perspective(800px) rotateX(8deg) translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: perspective(800px) rotateX(0deg) translateY(0);
+  }
+}
+
+.card-3d-in {
+  animation: card3DIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Underline sweeping animation */
+@keyframes underlineSweep {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+.underline-sweep::after {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+  margin-top: 6px;
+  animation: underlineSweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Radial pulse for progress circle */
+@keyframes radialPulse {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+}
+
+.radial-pulse {
+  animation: radialPulse 2s ease-in-out infinite;
+}
+
+/* ─── Live Aurora Orbs ─── */
+@keyframes auroraOrb1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(80px, -60px) scale(1.2);
+  }
+
+  50% {
+    transform: translate(-40px, -100px) scale(0.9);
+  }
+
+  75% {
+    transform: translate(60px, 40px) scale(1.1);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes auroraOrb2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(-60px, 50px) scale(1.15);
+  }
+
+  50% {
+    transform: translate(50px, 80px) scale(0.85);
+  }
+
+  75% {
+    transform: translate(-30px, -40px) scale(1.05);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes auroraOrb3 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(40px, 70px) scale(1.25);
+  }
+
+  66% {
+    transform: translate(-70px, -30px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.aurora-orb-1 {
+  animation: auroraOrb1 15s ease-in-out infinite;
+}
+
+.aurora-orb-2 {
+  animation: auroraOrb2 18s ease-in-out infinite;
+}
+
+.aurora-orb-3 {
+  animation: auroraOrb3 20s ease-in-out infinite;
+}
+
+/* Morphing blob */
+@keyframes morphBlob {
+
+  0%,
+  100% {
+    border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
+  }
+
+  25% {
+    border-radius: 60% 40% 30% 70% / 50% 60% 40% 50%;
+  }
+
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+
+  75% {
+    border-radius: 50% 40% 60% 50% / 30% 50% 70% 60%;
+  }
+}
+
+.morph-blob {
+  animation: morphBlob 10s ease-in-out infinite;
+}
+
+/* Ticker scroll */
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-scroll {
+  animation: tickerScroll 30s linear infinite;
+}
+
+/* Gentle sway */
+@keyframes sway {
+
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateX(3px) rotate(0.5deg);
+  }
+
+  75% {
+    transform: translateX(-3px) rotate(-0.5deg);
+  }
+}
+
+.sway {
+  animation: sway 5s ease-in-out infinite;
 }
 
 /* ─── Custom Scrollbar ─── */

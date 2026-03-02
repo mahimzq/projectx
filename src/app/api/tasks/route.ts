@@ -8,12 +8,18 @@ export async function POST(request: Request) {
         const session = await getServerSession(authOptions);
         const body = await request.json();
 
+        const userRole = (session?.user as any)?.role || 'STAFF';
+        const userId = (session?.user as any)?.id;
+
         // Determine the owner
         let ownerId: string | null = body.ownerId || null;
 
         if (!ownerId && !body.ownerName && session?.user) {
-            ownerId = (session.user as any).id;
+            ownerId = userId;
         }
+
+        // Auto-accept if submitted by DIRECTOR or PROJECT_MANAGER
+        const autoAccept = ['DIRECTOR', 'PROJECT_MANAGER', 'ADMIN'].includes(userRole);
 
         // Only include known Task model fields to avoid Prisma errors
         const taskData: any = {
@@ -23,6 +29,8 @@ export async function POST(request: Request) {
             durationDays: body.durationDays ? Number(body.durationDays) : 0,
             estimatedCost: body.estimatedCost ? Number(body.estimatedCost) : 0,
             phaseId: body.phaseId,
+            accepted: autoAccept,
+            submittedById: userId || null,
         };
 
         // Only set optional fields if they have values
@@ -33,6 +41,7 @@ export async function POST(request: Request) {
         if (body.notes) taskData.notes = body.notes;
         if (body.ragRating) taskData.ragRating = body.ragRating;
         if (body.actionType) taskData.actionType = body.actionType;
+        if (body.spaceId) taskData.spaceId = body.spaceId;
 
         const task = await prisma.task.create({
             data: taskData,

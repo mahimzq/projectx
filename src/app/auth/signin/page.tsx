@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Lock, Mail, Loader2, AlertCircle } from "lucide-react";
 
 export default function SignInPage() {
@@ -77,7 +78,12 @@ export default function SignInPage() {
                             </div>
 
                             <div className="space-y-1.5 sm:space-y-2">
-                                <label className="text-sm font-medium text-slate-300 ml-1">Password</label>
+                                <div className="flex items-center justify-between mx-1">
+                                    <label className="text-sm font-medium text-slate-300">Password</label>
+                                    <Link href="/auth/forgot-password" className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors">
+                                        Forgot Password?
+                                    </Link>
+                                </div>
                                 <div className="relative group">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
                                     <input

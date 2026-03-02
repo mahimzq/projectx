@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Settings as SettingsIcon, UserPlus, Users } from "lucide-react";
+import { Plus, Trash2, Settings as SettingsIcon, UserPlus, Users, Building2, UserMinus } from "lucide-react";
 import { useAlertDialog } from "@/components/AlertDialog";
+import { useSession } from "next-auth/react";
+import { useSpace } from "@/components/SpaceContext";
 
 export default function SettingsPage() {
+    const { data: session } = useSession();
+    const { refreshSpaces, activeSpaceId } = useSpace();
     const [phases, setPhases] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState<any[]>([]);
@@ -18,27 +22,45 @@ export default function SettingsPage() {
     const [newUserEmail, setNewUserEmail] = useState("");
     const [newUserName, setNewUserName] = useState("");
     const [newUserPassword, setNewUserPassword] = useState("");
-    const [newUserRole, setNewUserRole] = useState("DIRECTOR");
+    const [newUserRole, setNewUserRole] = useState("STAFF");
     const { confirm: confirmDialog, DialogComponent } = useAlertDialog();
+
+    // Space State
+    const [spaces, setSpaces] = useState<any[]>([]);
+    const [newSpaceName, setNewSpaceName] = useState("");
+    const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
+    const [spaceMembers, setSpaceMembers] = useState<any[]>([]);
+    const [addMemberUserId, setAddMemberUserId] = useState("");
+
+    const userRole = (session?.user as any)?.role || 'STAFF';
+    const isAdmin = ['ADMIN', 'DIRECTOR'].includes(userRole);
 
     const fetchAllData = async () => {
         try {
-            const [phasesRes, usersRes] = await Promise.all([
-                fetch("/api/phases"),
-                fetch("/api/users")
+            const spaceQuery = activeSpaceId ? `?spaceId=${activeSpaceId}` : '';
+            const [phasesRes, usersRes, spacesRes] = await Promise.all([
+                fetch(`/api/phases${spaceQuery}`),
+                fetch("/api/users"),
+                fetch("/api/spaces"),
             ]);
 
             const phasesData = await phasesRes.json();
             const usersData = await usersRes.json();
+            const spacesData = await spacesRes.json();
 
             if (Array.isArray(phasesData)) {
                 setPhases(phasesData);
-                if (phasesData.length > 0 && !selectedPhaseId) {
+                if (phasesData.length > 0) {
                     setSelectedPhaseId(phasesData[0].id);
+                } else {
+                    setSelectedPhaseId('');
                 }
             }
             if (Array.isArray(usersData)) {
                 setUsers(usersData);
+            }
+            if (Array.isArray(spacesData)) {
+                setSpaces(spacesData);
             }
         } catch (err) {
             console.error("Failed to fetch data:", err);
@@ -47,9 +69,29 @@ export default function SettingsPage() {
         }
     };
 
+    const fetchSpaceMembers = async (spaceId: string) => {
+        try {
+            const res = await fetch(`/api/spaces/${spaceId}/members`);
+            if (res.ok) {
+                const data = await res.json();
+                setSpaceMembers(Array.isArray(data) ? data : []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch members:", err);
+        }
+    };
+
     useEffect(() => {
         fetchAllData();
-    }, []);
+    }, [activeSpaceId]);
+
+    useEffect(() => {
+        if (selectedSpaceId) {
+            fetchSpaceMembers(selectedSpaceId);
+        } else {
+            setSpaceMembers([]);
+        }
+    }, [selectedSpaceId]);
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -101,7 +143,11 @@ export default function SettingsPage() {
             const res = await fetch("/api/phases", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newPhaseName, order: phases.length + 1 }),
+                body: JSON.stringify({
+                    name: newPhaseName,
+                    order: phases.length + 1,
+                    spaceId: activeSpaceId || null,
+                }),
             });
             if (res.ok) {
                 setNewPhaseName("");
@@ -144,6 +190,7 @@ export default function SettingsPage() {
                     phaseId: selectedPhaseId,
                     priority: "Medium",
                     status: "Not Started",
+                    spaceId: activeSpaceId || undefined,
                 }),
             });
             if (res.ok) {
@@ -174,6 +221,88 @@ export default function SettingsPage() {
         }
     };
 
+    // Space handlers
+    const handleCreateSpace = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newSpaceName.trim()) return;
+        try {
+            const res = await fetch("/api/spaces", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newSpaceName }),
+            });
+            if (res.ok) {
+                setNewSpaceName("");
+                fetchAllData();
+                refreshSpaces();
+            }
+        } catch (err) {
+            console.error("Error creating space:", err);
+        }
+    };
+
+    const handleDeleteSpace = async (id: string) => {
+        const confirmed = await confirmDialog({
+            title: "Delete Space",
+            message: "This will permanently delete this space and ALL its tasks and phases. This action cannot be undone.",
+            variant: "danger",
+            confirmLabel: "Delete Space",
+        });
+        if (!confirmed) return;
+        try {
+            const res = await fetch(`/api/spaces/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                if (selectedSpaceId === id) setSelectedSpaceId(null);
+                fetchAllData();
+                refreshSpaces();
+            }
+        } catch (err) {
+            console.error("Error deleting space:", err);
+        }
+    };
+
+    const handleAddMember = async () => {
+        if (!selectedSpaceId || !addMemberUserId) return;
+        try {
+            const res = await fetch(`/api/spaces/${selectedSpaceId}/members`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: addMemberUserId }),
+            });
+            if (res.ok) {
+                setAddMemberUserId("");
+                fetchSpaceMembers(selectedSpaceId);
+            }
+        } catch (err) {
+            console.error("Error adding member:", err);
+        }
+    };
+
+    const handleRemoveMember = async (userId: string) => {
+        if (!selectedSpaceId) return;
+        try {
+            const res = await fetch(`/api/spaces/${selectedSpaceId}/members?userId=${userId}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                fetchSpaceMembers(selectedSpaceId);
+            }
+        } catch (err) {
+            console.error("Error removing member:", err);
+        }
+    };
+
+    const getRoleBadgeClasses = (role: string) => {
+        switch (role) {
+            case 'DIRECTOR': return 'bg-rose-500/20 text-rose-400';
+            case 'PROJECT_MANAGER': return 'bg-amber-500/20 text-amber-400';
+            case 'MANAGER': return 'bg-blue-500/20 text-blue-400';
+            case 'CAREHOME_MANAGER': return 'bg-indigo-500/20 text-indigo-400';
+            case 'ADMIN': return 'bg-purple-500/20 text-purple-400';
+            default: return 'bg-slate-500/20 text-slate-400';
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -190,9 +319,160 @@ export default function SettingsPage() {
                 </div>
                 <div>
                     <h2 className="text-xl md:text-3xl font-bold text-white tracking-tight">System Configuration</h2>
-                    <p className="text-slate-400 mt-0.5 md:mt-1 text-xs md:text-base">Manage users, phases, and task templates</p>
+                    <p className="text-slate-400 mt-0.5 md:mt-1 text-xs md:text-base">Manage users, phases, spaces, and task templates</p>
                 </div>
             </div>
+
+            {/* Space Management (Admin Only) */}
+            {isAdmin && (
+                <div className="glass-card overflow-hidden">
+                    <div className="bg-white/5 px-4 md:px-8 py-3 md:py-4 border-b border-white/10 flex items-center gap-3">
+                        <Building2 className="text-blue-400 w-5 h-5" />
+                        <h3 className="text-sm md:text-lg font-bold text-white uppercase tracking-wider">Space Management</h3>
+                    </div>
+                    <div className="p-4 md:p-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
+                            {/* Create Space */}
+                            <div className="space-y-4 md:space-y-6">
+                                <div>
+                                    <h4 className="text-xs md:text-sm font-semibold text-slate-300 uppercase tracking-widest mb-1.5 md:mb-2 flex items-center gap-2">
+                                        <Plus size={16} /> Create Space
+                                    </h4>
+                                    <p className="text-[10px] md:text-xs text-slate-500">Create isolated workspaces for different companies.</p>
+                                </div>
+                                <form onSubmit={handleCreateSpace} className="flex gap-2 md:gap-3">
+                                    <input
+                                        type="text"
+                                        placeholder="Space name (e.g. Company A)..."
+                                        value={newSpaceName}
+                                        onChange={(e) => setNewSpaceName(e.target.value)}
+                                        className="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-3 md:px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-medium"
+                                    />
+                                    <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-3 md:px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-black transition-all shadow-lg active:scale-95 shrink-0">
+                                        <Plus size={16} /> Create
+                                    </button>
+                                </form>
+
+                                {/* Space list */}
+                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {spaces.map((space: any) => (
+                                        <div
+                                            key={space.id}
+                                            onClick={() => setSelectedSpaceId(space.id)}
+                                            className={`flex items-center justify-between p-3 md:p-4 rounded-xl border transition-all cursor-pointer group ${selectedSpaceId === space.id
+                                                ? 'bg-blue-600/10 border-blue-500/30'
+                                                : 'bg-white/5 border-white/5 hover:border-white/10'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold text-sm border border-blue-500/10 shrink-0">
+                                                    {space.name.charAt(0)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-bold text-white truncate">{space.name}</p>
+                                                    <p className="text-[10px] text-slate-500">{space._count?.members || 0} members</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteSpace(space.id); }}
+                                                className="p-2 text-slate-600 hover:text-rose-400 transition-colors md:opacity-0 md:group-hover:opacity-100 shrink-0 ml-2"
+                                                title="Delete Space"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {spaces.length === 0 && (
+                                        <div className="py-8 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                                            <p className="text-slate-500 text-sm font-medium">No spaces created yet.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Space Members */}
+                            <div className="lg:col-span-2 space-y-4 md:space-y-6">
+                                <div>
+                                    <h4 className="text-xs md:text-sm font-semibold text-slate-300 uppercase tracking-widest mb-1.5 md:mb-2 flex items-center gap-2">
+                                        <Users size={16} /> Space Members
+                                    </h4>
+                                    <p className="text-[10px] md:text-xs text-slate-500">
+                                        {selectedSpaceId ? `Manage members for "${spaces.find(s => s.id === selectedSpaceId)?.name}"` : 'Select a space to manage members'}
+                                    </p>
+                                </div>
+
+                                {selectedSpaceId && (
+                                    <>
+                                        {/* Add member */}
+                                        <div className="flex gap-2 md:gap-3">
+                                            <select
+                                                value={addMemberUserId}
+                                                onChange={(e) => setAddMemberUserId(e.target.value)}
+                                                className="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-3 md:px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none font-medium"
+                                            >
+                                                <option value="">Select user to add...</option>
+                                                {users
+                                                    .filter(u => !spaceMembers.find(m => m.user.id === u.id))
+                                                    .map(u => (
+                                                        <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                                                    ))
+                                                }
+                                            </select>
+                                            <button
+                                                onClick={handleAddMember}
+                                                disabled={!addMemberUserId}
+                                                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-3 md:px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-black transition-all active:scale-95 shrink-0"
+                                            >
+                                                <UserPlus size={16} /> Add
+                                            </button>
+                                        </div>
+
+                                        {/* Members list */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                                            {spaceMembers.map((member: any) => (
+                                                <div key={member.id} className="bg-white/5 border border-white/5 p-3 md:p-4 rounded-2xl flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300">
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/10 shadow-inner shrink-0">
+                                                            {member.user.name.charAt(0)}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-bold text-white truncate">{member.user.name}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${getRoleBadgeClasses(member.user.role)}`}>
+                                                                    {member.user.role.replace('_', ' ')}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleRemoveMember(member.user.id)}
+                                                        className="p-2 text-slate-600 hover:text-rose-400 transition-colors md:opacity-0 md:group-hover:opacity-100 shrink-0 ml-2"
+                                                        title="Remove from space"
+                                                    >
+                                                        <UserMinus size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {spaceMembers.length === 0 && (
+                                                <div className="col-span-full py-8 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                                                    <p className="text-slate-500 text-sm font-medium">No members in this space yet.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+
+                                {!selectedSpaceId && (
+                                    <div className="py-12 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                                        <Building2 className="mx-auto text-slate-700 mb-3" size={32} />
+                                        <p className="text-slate-500 text-sm font-medium">Select a space from the left to manage its members</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* User Management */}
             <div className="glass-card overflow-hidden">
@@ -243,6 +523,8 @@ export default function SettingsPage() {
                                     >
                                         <option value="DIRECTOR">Director (Full Access)</option>
                                         <option value="PROJECT_MANAGER">Project Manager</option>
+                                        <option value="MANAGER">Manager</option>
+                                        <option value="CAREHOME_MANAGER">Carehome Manager</option>
                                         <option value="STAFF">Staff (Member)</option>
                                     </select>
                                 </div>
@@ -272,10 +554,7 @@ export default function SettingsPage() {
                                             <div className="min-w-0">
                                                 <p className="text-sm font-bold text-white tracking-tight truncate">{user.name}</p>
                                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${user.role === 'DIRECTOR' ? 'bg-rose-500/20 text-rose-400' :
-                                                        user.role === 'PROJECT_MANAGER' ? 'bg-amber-500/20 text-amber-400' :
-                                                            'bg-slate-500/20 text-slate-400'
-                                                        }`}>
+                                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${getRoleBadgeClasses(user.role)}`}>
                                                         {user.role.replace('_', ' ')}
                                                     </span>
                                                     <span className="text-[10px] text-slate-500 font-medium lowercase truncate max-w-[100px] md:max-w-[120px]">{user.email}</span>
